@@ -119,6 +119,17 @@ const dots = Object.entries(MICRO).map(([c, [lat, lon]]) => {
   return { c, cx: r1(x), cy: r1(y) };
 }).sort((a, b) => a.c.localeCompare(b.c));
 
+// 每個圓點到「最近的另一個圓點」的距離。前端用它限制點擊區大小——
+// 加勒比海那幾個島國彼此只差幾個單位，點擊區放太大就會互相搶點擊。
+for (const d of dots) {
+  let min = Infinity;
+  for (const o of dots) {
+    if (o === d) continue;
+    min = Math.min(min, Math.hypot(d.cx - o.cx, d.cy - o.cy));
+  }
+  d.nd = r1(min);
+}
+
 fs.writeFileSync(
   OUT,
   'window.MAP = ' + JSON.stringify({ w: W, h: H, countries: out, dots }) + ';\n',

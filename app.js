@@ -89,6 +89,10 @@
     (nodesOf[c] = nodesOf[c] || []).push(el);
   });
 
+  // 每個小國圓點到最近的另一個圓點的距離（SVG 單位），用來限制點擊區大小
+  var NEAR = {};
+  MAP.dots.forEach(function (o) { if (o.nd) NEAR[o.c] = o.nd; });
+
   // 各國在地圖上的中心點（給搜尋時定位用）
   var CENTER = {};
   MAP.countries.forEach(function (o) { CENTER[o.c] = [o.cx, o.cy]; });
@@ -108,9 +112,20 @@
     // 寬度由 ResizeObserver 提供而不是當場量：第一次執行時版面可能還沒算完，
     // getBoundingClientRect() 會回傳錯誤的寬度，讓圓點大得離譜。
     var px = (svgW || MAP.w) / view.w;      // 每個 SVG 單位幾像素
-    var rDot = 4.5 / px, rHit = 13 / px;
+
+    // 點擊區只在放大後才長大。全圖時整個歐洲只有約 100px 寬，
+    // 固定 26px 的點擊區會把德國、義大利、西班牙等十幾個國家整片蓋住。
+    var grow = Math.min(1, (MAP.w / view.w - 1) / 3);   // 放大到 4 倍時達到最大
+    var rDot = 4.5 / px;
+    var rHitPx = 4.5 + 9 * grow;
+
     Array.prototype.forEach.call(gDot.childNodes, function (n) {
-      n.setAttribute('r', n.getAttribute('class') === 'hit' ? rHit : rDot);
+      if (n.getAttribute('class') !== 'hit') { n.setAttribute('r', rDot); return; }
+      // 再受限於「最近的另一個圓點」——加勒比海那幾個島國靠得極近，
+      // 點擊區放太大會互相搶走點擊。放大之後距離拉開，這個上限自然失效。
+      var nd = NEAR[n.getAttribute('data-c')];
+      var capPx = nd ? 0.45 * nd * px : Infinity;
+      n.setAttribute('r', Math.max(rDot, Math.min(rHitPx, capPx) / px));
     });
   }
 
@@ -167,9 +182,11 @@
   };
 
   // 指標拖曳 ＋ 雙指縮放
-  var ptrs = {}, dragFrom = null, moved = 0, pinchDist = 0;
+  var ptrs = {}, dragFrom = null, moved = 0, pinchDist = 0, tapSlop = 5;
 
   mapbox.addEventListener('pointerdown', function (e) {
+    // 手指按下再放開幾乎一定會晃個幾像素，門檻跟滑鼠一樣嚴會讓手機上點不動
+    tapSlop = e.pointerType === 'touch' ? 14 : 5;
     ptrs[e.pointerId] = { x: e.clientX, y: e.clientY };
     var ids = Object.keys(ptrs);
     if (ids.length === 1) {
@@ -211,9 +228,9 @@
       return;
     }
 
-    // 沒在拖曳時顯示提示標籤
-    var c = e.target.getAttribute && e.target.getAttribute('data-c');
-    if (c && INFO[c]) {
+    // 沒在拖曳時顯示提示標籤——用和點擊相同的判定，避免標籤寫著義大利卻選到梵蒂岡
+    var c = pickAt(e.clientX, e.clientY);
+    if (c) {
       var bb = mapbox.getBoundingClientRect();
       tip.textContent = INFO[c].zh;
       tip.style.left = (e.clientX - bb.left) + 'px';
@@ -233,10 +250,47 @@
   mapbox.addEventListener('pointercancel', endPtr);
   mapbox.addEventListener('pointerleave', function () { tip.hidden = true; });
 
+  // 決定某個座標「應該」選到哪一國。
+  //
+  // 微型國家的圓點就畫在別國國土上——梵蒂岡在義大利身上、列支敦斯登在瑞士旁邊。
+  // 單純看最上層元素的話，點義大利中部會跑出梵蒂岡，非常違反直覺。
+  // 規則：縮小時大國優先（想點微型國就放大，或用搜尋框）；放大後小國優先。
+  // 這個點是否真的落在該國的「填色」裡，而不只是碰到它的邊框線。
+  // 國界描邊不隨縮放變細，全圖時甘比亞、以色列、寮國這種細長國家整個
+  // 只有一兩像素寬，鄰國的描邊會蓋住它們，導致永遠點不到。
+  function inFill(el, x, y) {
+    if (!el.isPointInFill || !svg.createSVGPoint) return false;
+    var m = svg.getScreenCTM();
+    if (!m) return false;
+    var pt = svg.createSVGPoint();
+    pt.x = x; pt.y = y;
+    try { return el.isPointInFill(pt.matrixTransform(m.inverse())); }
+    catch (_) { return false; }
+  }
+
+  function pickAt(x, y) {
+    var els = document.elementsFromPoint(x, y);
+    var dot = null, land = null, landAny = null;
+    for (var i = 0; i < els.length; i++) {
+      var el = els[i];
+      if (!el.getAttribute) continue;
+      var c = el.getAttribute('data-c');
+      if (!c || !INFO[c]) continue;
+      if (el.tagName === 'circle') {
+        if (!dot) dot = c;
+      } else {
+        if (!landAny) landAny = c;                    // 只碰到邊框也算，當退路
+        if (!land && inFill(el, x, y)) land = c;      // 填色真的包含此點者優先
+      }
+    }
+    land = land || landAny;
+    return (MAP.w / view.w < 3) ? (land || dot) : (dot || land);
+  }
+
   svg.addEventListener('click', function (e) {
-    if (moved > 5) return;                       // 拖曳而非點擊
-    var c = e.target.getAttribute && e.target.getAttribute('data-c');
-    if (c && INFO[c]) select(c);
+    if (moved > tapSlop) return;                 // 拖曳而非點擊
+    var c = pickAt(e.clientX, e.clientY);
+    if (c) select(c);
   });
 
   // ══════════════ 選取與詳情面板 ══════════════
@@ -412,17 +466,26 @@
 
   // 地圖寬度一有變化就重算圓點半徑——涵蓋初次版面計算完成、視窗縮放、
   // 轉向、字體載入造成的重排。比在腳本執行當下量一次可靠得多。
+  //
+  // ⚠️ 觀察的是容器 div 而不是 <svg>：ResizeObserver 對 SVG 元素回報的是
+  //    SVG 使用者座標單位（永遠是 viewBox 的 1000），不是 CSS 像素。
+  // 先同步量一次當起始值，不要等 ResizeObserver 的第一次回呼——
+  // 在某些不進行畫面合成的環境裡（背景分頁、隱藏的 iframe）它可能一直不觸發。
+  function measure() {
+    var w = mapbox.clientWidth || svg.getBoundingClientRect().width;
+    if (w && w !== svgW) { svgW = w; applyView(); }
+  }
+  measure();
+
   if (window.ResizeObserver) {
     new ResizeObserver(function (entries) {
       var w = entries[0].contentRect.width;
       if (w && w !== svgW) { svgW = w; applyView(); }
-    }).observe(svg);
+    }).observe(mapbox);
   } else {
     var rt;
-    var measure = function () { svgW = svg.getBoundingClientRect().width; applyView(); };
     window.addEventListener('resize', function () { clearTimeout(rt); rt = setTimeout(measure, 150); });
     window.addEventListener('load', measure);
-    measure();
   }
 
   applyView();
