@@ -275,8 +275,10 @@
   var ptrs = {}, dragFrom = null, moved = 0, pinchDist = 0, tapSlop = 5;
 
   mapbox.addEventListener('pointerdown', function (e) {
-    // 手指按下再放開幾乎一定會晃個幾像素，門檻跟滑鼠一樣嚴會讓手機上點不動
-    tapSlop = e.pointerType === 'touch' ? 14 : 5;
+    // 按下再放開幾乎一定會晃個幾像素——觸控板按壓、手指離開螢幕都會。
+    // 門檻設太嚴（原本滑鼠 5px）會讓點擊被默默吃掉，使用者只覺得「點了沒反應」。
+    // 真正要平移地圖時位移遠大於此，放寬不會誤判。
+    tapSlop = e.pointerType === 'touch' ? 16 : 10;
     ptrs[e.pointerId] = { x: e.clientX, y: e.clientY };
     var ids = Object.keys(ptrs);
     if (ids.length === 1) {
