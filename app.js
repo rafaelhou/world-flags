@@ -80,8 +80,39 @@
     });
   });
 
+  // ── 國名標籤 ──────────────────────────────────────
+  // 地圖上放不下全名的國家，改用短名
+  var SHORT = {
+    tw: '臺灣', ba: '波赫', cd: '剛果（金）', cg: '剛果（布）', pg: '巴紐',
+    st: '聖多美', kn: '聖克里斯多福', vc: '聖文森', tt: '千里達', ag: '安地卡',
+    fm: '密克羅尼西亞', cf: '中非', sa: '沙烏地', ae: '阿聯', gq: '赤道幾內亞',
+    do: '多明尼加', mk: '北馬其頓', sz: '史瓦帝尼'
+  };
+
+  var gLbl = document.createElementNS(SVGNS, 'g');
+  gLbl.setAttribute('class', 'labels');
+  var labels = [];
+
+  function addLabel(code, cx, cy, bw, bh, isDot) {
+    var t = document.createElementNS(SVGNS, 'text');
+    t.setAttribute('class', 'lbl');
+    t.setAttribute('x', cx);
+    t.setAttribute('y', cy);
+    t.textContent = SHORT[code] || INFO[code].zh;
+    gLbl.appendChild(t);
+    labels.push({ el: t, n: t.textContent.length, bw: bw, bh: bh, dot: isDot, x: cx, cy: cy });
+  }
+
+  MAP.countries.forEach(function (o) {
+    if (INFO[o.c]) addLabel(o.c, o.cx, o.cy, o.bw, o.bh, false);
+  });
+  MAP.dots.forEach(function (o) {
+    if (INFO[o.c]) addLabel(o.c, o.cx, o.cy, 0, 0, true);
+  });
+
   svg.appendChild(gLand);
   svg.appendChild(gDot);
+  svg.appendChild(gLbl);
 
   var nodesOf = {};   // code -> [elements]
   Array.prototype.forEach.call(svg.querySelectorAll('[data-c]'), function (el) {
@@ -128,7 +159,64 @@
       var capPx = nd ? 0.45 * nd * px : Infinity;
       n.setAttribute('r', Math.max(rDot, Math.min(rHitPx, capPx) / px));
     });
+
+    updateLabels(px);
   }
+
+  // ── 標籤：字級固定在螢幕上 11px，放得下才顯示 ──────────
+  // 197 個國名同時出現會糊成一團，所以用「這個國家在畫面上夠不夠大」
+  // 來決定要不要標——全圖只看得到大國，放大後小國的名字才浮現。
+  var FS = 11, labelsOn = true, lastPx = -1;
+
+  function updateLabels(px) {
+    if (!labelsOn) return;
+    if (px === lastPx) return;              // 平移不需重算，只有縮放才要
+    lastPx = px;
+
+    var fs = FS / px;                       // 螢幕 11px 換算成 SVG 單位
+    var zoomK = MAP.w / view.w;
+
+    // 第一輪：這個國家在畫面上放得下自己的名字嗎
+    var cand = [];
+    for (var i = 0; i < labels.length; i++) {
+      var L = labels[i];
+      var ok = L.dot
+        ? zoomK >= 4                        // 小島國放大後才標
+        : (L.bw * px > L.n * FS * 1.15 && L.bh * px > FS * 1.5);
+      if (!ok) { L.el.style.display = 'none'; continue; }
+      // 碰撞框比字面稍大：中文字約 1em 寬，再加字距與 3px 的白色描邊光暈
+      var y = L.dot ? L.cy + 9 / px : L.cy;
+      var hw = (L.n * fs * 1.06) / 2 + 3 / px;
+      var hh = fs * 0.75 + 3 / px;
+      cand.push({ L: L, y: y, x0: L.x - hw, x1: L.x + hw, y0: y - hh, y1: y + hh });
+    }
+
+    // 第二輪：大國優先擺放，會撞到已擺放者的就讓位。
+    // 沒有這一步，歐洲一放大就會擠成一團互相疊字。
+    cand.sort(function (a, b) { return (b.L.bw * b.L.bh) - (a.L.bw * a.L.bh); });
+
+    var placed = [];
+    for (var k = 0; k < cand.length; k++) {
+      var c = cand[k], hit = false;
+      for (var m = 0; m < placed.length; m++) {
+        var q = placed[m];
+        if (c.x0 < q.x1 && q.x0 < c.x1 && c.y0 < q.y1 && q.y0 < c.y1) { hit = true; break; }
+      }
+      if (hit) { c.L.el.style.display = 'none'; continue; }
+      placed.push(c);
+      c.L.el.style.display = '';
+      c.L.el.setAttribute('font-size', fs);
+      c.L.el.setAttribute('y', c.y);
+    }
+  }
+
+  var lblBtn = document.getElementById('lbl');
+  lblBtn.addEventListener('click', function () {
+    labelsOn = !labelsOn;
+    lblBtn.setAttribute('aria-pressed', labelsOn ? 'true' : 'false');
+    gLbl.style.display = labelsOn ? '' : 'none';
+    if (labelsOn) { lastPx = -1; applyView(); }
+  });
 
   function clamp() {
     view.w = Math.max(MINW, Math.min(MAXW, view.w));

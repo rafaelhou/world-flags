@@ -41,6 +41,50 @@ const project = (lon, lat) => {
 
 const r1 = n => Math.round(n * 10) / 10;
 
+// ── 標籤位置：找多邊形內離邊界最遠的點 ─────────────────
+// 重心不能直接拿來放標籤——挪威是彎月形，重心會落在瑞典境內。
+function pointInRing(pts, x, y) {
+  let inside = false;
+  for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+    const [xi, yi] = pts[i], [xj, yj] = pts[j];
+    if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) inside = !inside;
+  }
+  return inside;
+}
+
+function distToRing(pts, x, y) {
+  let min = Infinity;
+  for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+    const [x1, y1] = pts[i], [x2, y2] = pts[j];
+    const dx = x2 - x1, dy = y2 - y1;
+    const L = dx * dx + dy * dy;
+    let t = L ? ((x - x1) * dx + (y - y1) * dy) / L : 0;
+    t = Math.max(0, Math.min(1, t));
+    min = Math.min(min, Math.hypot(x - (x1 + t * dx), y - (y1 + t * dy)));
+  }
+  return min;
+}
+
+// 在外框上打格子，取「在多邊形內、且離邊界最遠」的格點
+function labelPoint(pts) {
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (const [x, y] of pts) {
+    if (x < x0) x0 = x; if (x > x1) x1 = x;
+    if (y < y0) y0 = y; if (y > y1) y1 = y;
+  }
+  const N = 16;
+  let best = null, bestD = -1;
+  for (let i = 1; i < N; i++) {
+    for (let j = 1; j < N; j++) {
+      const x = x0 + (x1 - x0) * i / N, y = y0 + (y1 - y0) * j / N;
+      if (!pointInRing(pts, x, y)) continue;
+      const d = distToRing(pts, x, y);
+      if (d > bestD) { bestD = d; best = [x, y]; }
+    }
+  }
+  return best;
+}
+
 // 略過的地物：南極洲太佔版面且非國家
 const SKIP = new Set(['Antarctica', 'Fr. S. Antarctic Lands']);
 
@@ -64,30 +108,35 @@ for (const f of geo.features) {
     : f.geometry.coordinates;
 
   let d = '';
-  let best = { area: -1, cx: 0, cy: 0 };
+  let best = { area: -1, pts: null };
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
 
   for (const poly of rings) {
     for (const ring of poly) {
       if (ring.length < 4) continue;
       const pts = ring.map(([lon, lat]) => project(lon, lat));
 
-      // 面積與重心（shoelace）
-      let A = 0, cx = 0, cy = 0;
+      // 面積（shoelace），留下最大的環當代表
+      let A = 0;
       for (let i = 0; i < pts.length - 1; i++) {
-        const [x0, y0] = pts[i], [x1, y1] = pts[i + 1];
-        const cr = x0 * y1 - x1 * y0;
-        A += cr; cx += (x0 + x1) * cr; cy += (y0 + y1) * cr;
+        const [ax, ay] = pts[i], [bx, by] = pts[i + 1];
+        A += ax * by - bx * ay;
       }
-      A /= 2;
-      if (Math.abs(A) > best.area) {
-        best = { area: Math.abs(A), cx: cx / (6 * A), cy: cy / (6 * A) };
+      A = Math.abs(A / 2);
+      if (A > best.area) best = { area: A, pts };
+
+      for (const [x, y] of pts) {
+        if (x < x0) x0 = x; if (x > x1) x1 = x;
+        if (y < y0) y0 = y; if (y > y1) y1 = y;
       }
 
       d += 'M' + pts.map(([x, y]) => `${r1(x)} ${r1(y)}`).join('L') + 'Z';
     }
   }
 
-  if (!d) continue;
+  if (!d || !best.pts) continue;
+
+  const lp = labelPoint(best.pts) || [(x0 + x1) / 2, (y0 + y1) / 2];
 
   out.push({
     c: code.toLowerCase(),
@@ -95,8 +144,11 @@ for (const f of geo.features) {
     zh: p.NAME_ZHT || p.NAME_ZH || p.NAME,
     cont: p.CONTINENT,
     d,
-    cx: r1(best.cx),
-    cy: r1(best.cy),
+    cx: r1(lp[0]),
+    cy: r1(lp[1]),
+    // 最大陸塊的外框（SVG 單位），前端用它判斷放不放得下標籤
+    bw: r1(x1 - x0),
+    bh: r1(y1 - y0),
   });
 }
 

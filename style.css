@@ -315,6 +315,22 @@ b { font-weight: 700; color: var(--accent-dk); }
 .dot.fam { fill: var(--fam); }
 .dot.sel { fill: var(--accent); stroke-width: 2.5; }
 
+/* 國名標籤：白色描邊當底，深色地形上也讀得到 */
+.labels { pointer-events: none; }
+
+.lbl {
+  fill: #4a4335;
+  stroke: rgba(255, 255, 255, .9);
+  stroke-width: 3px;
+  paint-order: stroke fill;
+  vector-effect: non-scaling-stroke;   /* 描邊粗細不隨縮放變化 */
+  text-anchor: middle;
+  dominant-baseline: middle;
+  font-weight: 600;
+  letter-spacing: .02em;
+  user-select: none;
+}
+
 .tip {
   position: absolute;
   z-index: 5;
