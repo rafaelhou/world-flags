@@ -1,0 +1,253 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>世界國旗地圖 · 每一面旗都是一段歷史</title>
+<meta name="description" content="點擊地圖上的國家，看見這面國旗背後的故事。197 面國旗、七大旗幟家族、國旗設計的五個原則。">
+<meta name="theme-color" content="#1e2430">
+<link rel="icon" href="favicon.svg">
+<link rel="stylesheet" href="style.css">
+
+<meta property="og:title" content="世界國旗地圖">
+<meta property="og:description" content="點擊地圖上的國家，看見這面國旗背後的故事。">
+<meta property="og:type" content="website">
+
+<header class="hero">
+  <div class="wrap">
+    <p class="kicker">互動式世界地圖</p>
+    <h1>每一面國旗<br>都是一段沒說完的歷史</h1>
+    <p class="lede">丹麥的旗從天而降、莫三比克的旗上有一把 AK-47、尼泊爾的旗根本不是長方形——<br>點開地圖上的任何一個國家，看看那面旗想告訴你什麼。</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="wrap">
+    <a href="#map-sec">互動地圖</a>
+    <a href="#families">旗幟家族</a>
+    <a href="#design">設計原理</a>
+    <a href="#records">世界之最</a>
+    <a href="#all">全部國旗</a>
+  </div>
+</nav>
+
+<main>
+
+<!-- ══════════════ 互動地圖 ══════════════ -->
+<section id="map-sec" class="mapsec">
+  <div class="wrap">
+    <h2>點一個國家</h2>
+    <p class="intro">滑鼠滾輪或雙指縮放，拖曳移動。太小看不到的島國，在地圖上是一個小圓點——也可以直接用下面的搜尋框找。</p>
+
+    <div class="toolbar">
+      <div class="searchbox">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M11 11l4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <input id="search" type="search" placeholder="搜尋國家（中文或英文）" autocomplete="off" aria-label="搜尋國家">
+        <ul id="results" class="results" hidden></ul>
+      </div>
+      <div class="zoombtns">
+        <button type="button" id="zin"  aria-label="放大">＋</button>
+        <button type="button" id="zout" aria-label="縮小">−</button>
+        <button type="button" id="zrst" aria-label="重設縮放">重設</button>
+      </div>
+    </div>
+
+    <p class="famhint">或者，把同一個「家族」的旗一次點亮：</p>
+    <div class="fambar" id="fambar">
+      <button type="button" data-fam="nordic">北歐十字</button>
+      <button type="button" data-fam="tri">法式三色旗</button>
+      <button type="button" data-fam="panaf">泛非色</button>
+      <button type="button" data-fam="arab">泛阿拉伯色</button>
+      <button type="button" data-fam="slav">泛斯拉夫色</button>
+      <button type="button" data-fam="union">米字旗系統</button>
+      <button type="button" data-fam="crescent">星月旗</button>
+      <button type="button" data-fam="miranda">米蘭達三色</button>
+    </div>
+
+    <div class="maplayout">
+      <div class="mapbox">
+        <svg id="map" role="img" aria-label="世界地圖，點擊國家可查看國旗資料"></svg>
+        <div id="tip" class="tip" hidden></div>
+      </div>
+
+      <aside id="panel" class="panel" aria-live="polite">
+        <div class="empty">
+          <svg viewBox="0 0 48 32" aria-hidden="true">
+            <rect x="1" y="1" width="46" height="30" rx="2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-dasharray="4 3"/>
+          </svg>
+          <p>還沒選任何國家</p>
+          <p class="hint">點地圖，或用上面的搜尋框</p>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<div class="wrap">
+
+<!-- ══════════════ 旗幟家族 ══════════════ -->
+<section id="families">
+  <h2>旗幟家族：為什麼很多國旗長得像</h2>
+  <p class="highlight">國旗很少是憑空設計的。它們大多是<strong>某個歷史事件的後代</strong>——一場革命、一個帝國、一次獨立浪潮。認出家族，你就能一眼看懂半個世界的國旗。</p>
+
+  <div class="fams">
+
+    <article class="fam">
+      <h3>北歐十字</h3>
+      <p class="from">祖先：<strong>丹麥的丹寧堡（1219）</strong></p>
+      <p>十字偏向旗桿側，而不是置中。這個看似奇怪的設計其實很務實：旗子在旗桿上飄動時，靠旗桿的部分幾乎不動，把十字往左推，遠看反而剛好在中央。</p>
+      <p class="who">丹麥 · 瑞典 · 挪威 · 芬蘭 · 冰島（以及法羅群島、奧蘭群島、設得蘭等地區旗）</p>
+    </article>
+
+    <article class="fam">
+      <h3>法式三色旗</h3>
+      <p class="from">祖先：<strong>法國三色旗（1794）</strong></p>
+      <p>三道等寬直條。法國大革命把它變成「共和」與「人民主權」的視覺代號，十九世紀之後，任何一個推翻王室的新國家幾乎都會做一面自己的三色旗。荷蘭其實比法國早兩百年用三色，但把它推向全世界的是法國。</p>
+      <p class="who">義大利 · 比利時 · 愛爾蘭 · 羅馬尼亞 · 查德 · 墨西哥 · 安道爾 · 摩爾多瓦 · 幾內亞 · 馬利……</p>
+    </article>
+
+    <article class="fam">
+      <h3>泛非色（綠黃紅）</h3>
+      <p class="from">祖先：<strong>衣索比亞</strong></p>
+      <p>衣索比亞是非洲唯一沒有被歐洲長期殖民的國家，1896 年還在阿杜瓦擊敗了義大利。二十世紀非洲各國獨立時，紛紛採用它的綠黃紅，等於在國旗上宣告：<strong>我們也不曾真正被征服。</strong></p>
+      <p class="who">迦納 · 幾內亞 · 馬利 · 塞內加爾 · 喀麥隆 · 多哥 · 貝南 · 剛果 · 辛巴威 · 莫三比克……</p>
+      <p class="note">另有一組「泛非色」是紅黑綠，源自馬科斯·加維在美國創立的黑人民族主義運動，肯亞、馬拉威、南蘇丹屬於這一系。</p>
+    </article>
+
+    <article class="fam">
+      <h3>泛阿拉伯色（黑白綠紅）</h3>
+      <p class="from">祖先：<strong>1916 年阿拉伯大起義旗</strong></p>
+      <p>四個顏色各代表一個伊斯蘭王朝：黑是阿拔斯、白是倭馬亞、綠是法蒂瑪、紅是哈希姆家族。這四色在鄂圖曼帝國瓦解後，成為阿拉伯民族主義的共同語言。</p>
+      <p class="who">約旦 · 巴勒斯坦 · 阿聯 · 科威特 · 蘇丹 · 伊拉克 · 敘利亞 · 葉門 · 埃及</p>
+      <p class="note">埃及、伊拉克、敘利亞、葉門那組紅白黑又稱「阿拉伯解放色」，源自 1952 年埃及革命。</p>
+    </article>
+
+    <article class="fam">
+      <h3>泛斯拉夫色（白藍紅）</h3>
+      <p class="from">祖先：<strong>俄羅斯三色旗（彼得大帝仿荷蘭）</strong></p>
+      <p>1848 年布拉格斯拉夫大會上，各斯拉夫民族決定以俄國旗的白藍紅作為共同象徵。所以今天中東歐一整片國家的國旗顏色都很像——它們是一場泛民族運動留下的痕跡。</p>
+      <p class="who">俄羅斯 · 塞爾維亞 · 斯洛伐克 · 斯洛維尼亞 · 克羅埃西亞 · 捷克 · 保加利亞</p>
+    </article>
+
+    <article class="fam">
+      <h3>米字旗系統</h3>
+      <p class="from">祖先：<strong>英國藍船旗（Blue Ensign）</strong></p>
+      <p>大英帝國的殖民地旗有固定格式：左上角放米字旗，右邊放代表當地的符號。獨立之後，有些國家全數換掉（加拿大、南非、印度），有些選擇保留——保留的那些，如今常成為國內辯論的題目。</p>
+      <p class="who">澳洲 · 紐西蘭 · 斐濟 · 吐瓦魯</p>
+    </article>
+
+    <article class="fam">
+      <h3>星月旗</h3>
+      <p class="from">祖先：<strong>鄂圖曼帝國旗</strong></p>
+      <p>常被當成「伊斯蘭的符號」，但它其實<strong>先是政治符號</strong>：新月與星原本是拜占庭君士坦丁堡的城徽，鄂圖曼攻下該城後承襲，再隨帝國版圖擴散到中東、北非與東南亞，才逐漸和伊斯蘭畫上等號。</p>
+      <p class="who">土耳其 · 突尼西亞 · 阿爾及利亞 · 巴基斯坦 · 馬來西亞 · 新加坡 · 馬爾地夫 · 亞塞拜然 · 土庫曼 · 烏茲別克 · 茅利塔尼亞 · 葛摩 · 利比亞</p>
+    </article>
+
+    <article class="fam">
+      <h3>米蘭達三色（黃藍紅）</h3>
+      <p class="from">祖先：<strong>大哥倫比亞共和國</strong></p>
+      <p>由委內瑞拉獨立先驅弗朗西斯科·德·米蘭達設計。1830 年大哥倫比亞解體後，三個繼承國各自保留了這組顏色——所以它們的國旗至今看起來像三兄弟。</p>
+      <p class="who">哥倫比亞 · 委內瑞拉 · 厄瓜多</p>
+    </article>
+
+  </div>
+</section>
+
+<!-- ══════════════ 設計原理 ══════════════ -->
+<section id="design">
+  <h2>什麼樣的國旗算好？</h2>
+  <p>北美旗幟學協會（NAVA）整理過五條原則，被公認是判斷旗幟設計優劣的標準。用它們回頭看世界各國的旗，會很有意思。</p>
+
+  <ol class="rules">
+    <li>
+      <h3>簡單到孩子能憑記憶畫出來</h3>
+      <p>這是第一條，也是最狠的一條。日本、加拿大、瑞士都能通過；如果一面旗要花五分鐘描述，設計大概就出了問題。</p>
+    </li>
+    <li>
+      <h3>使用有意義的象徵</h3>
+      <p>顏色、圖形、配置都應該指向這個國家真正的東西。烏克蘭的藍天麥田、黎巴嫩的雪松、柬埔寨的吳哥窟，都是好例子。</p>
+    </li>
+    <li>
+      <h3>用兩到三種基本色</h3>
+      <p>從旗幟的標準色盤中選擇，而且要能高對比。太多顏色在遠處會糊成一團——這正是貝里斯（十二色）常被批評的原因。</p>
+    </li>
+    <li>
+      <h3>不要放文字或國徽</h3>
+      <p>文字在背面會變成鏡像，遠看則完全無法辨識。國徽細節太多，做成小尺寸就成了一團模糊。中南美洲許多國旗都栽在這一條。</p>
+      <p class="note">沙烏地阿拉伯是刻意的例外——為了經文可讀，他們把兩面分別印製再縫合。</p>
+    </li>
+    <li>
+      <h3>要有辨識度，或者刻意相關</h3>
+      <p>要嘛獨一無二，要嘛就用相似性來表達真實的歷史關聯。查德與羅馬尼亞、印尼與摩納哥的雷同屬於前者的失敗；北歐五國的相似則屬於後者的成功。</p>
+    </li>
+  </ol>
+
+  <div class="callout">
+    <h3>順帶一提：這套原則的傳播者</h3>
+    <p>設計師 Roman Mars 2015 年的 TED 演講〈為什麼城市旗幟可能是你從沒注意過的最糟設計〉讓這五條原則爆紅。他在演講中痛批美國許多城市旗——「把市徽放在藍布上」——並稱之為 <strong>SOB：Seal On a Bedsheet（床單上的印章）</strong>。</p>
+  </div>
+</section>
+
+<!-- ══════════════ 世界之最 ══════════════ -->
+<section id="records">
+  <h2>國旗世界之最</h2>
+
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>紀錄</th><th>國家</th><th>說明</th></tr></thead>
+    <tbody>
+      <tr><th>最古老</th><td>丹麥</td><td>丹寧堡，可追溯至十三世紀，仍在使用</td></tr>
+      <tr><th>唯一非四邊形</th><td>尼泊爾</td><td>兩面三角錐旗上下疊合，憲法用 24 個作圖步驟定義</td></tr>
+      <tr><th>唯二正方形</th><td>瑞士 · 梵蒂岡</td><td>瑞士的商船旗仍是長方形</td></tr>
+      <tr><th>正反面不同</th><td>巴拉圭</td><td>正面國徽、背面財政部印章，必須兩面分開印再縫合</td></tr>
+      <tr><th>比例最細長</th><td>卡達</td><td>11:28</td></tr>
+      <tr><th>唯一有自動步槍</th><td>莫三比克</td><td>AK-47，2005 年公投保留</td></tr>
+      <tr><th>唯一有建築物</th><td>柬埔寨</td><td>吳哥窟</td></tr>
+      <tr><th>唯一有《聖經》</th><td>多明尼加</td><td>翻到〈約翰福音〉8:32</td></tr>
+      <tr><th>唯一用紫色</th><td>多米尼克</td><td>帝王亞馬遜鸚鵡的羽毛</td></tr>
+      <tr><th>唯一有彩虹</th><td>尼加拉瓜</td><td>國徽中五座火山之上</td></tr>
+      <tr><th>唯一沒有紅白藍</th><td>牙買加</td><td>只有黑、金、綠</td></tr>
+      <tr><th>顏色最多</th><td>貝里斯</td><td>十二色，也是唯一以人物為主體的國旗</td></tr>
+      <tr><th>曾是純色</th><td>利比亞</td><td>1977–2011 一整面純綠，沒有任何圖案</td></tr>
+      <tr><th>戰時倒掛</th><td>菲律賓</td><td>進入戰爭狀態時把紅色翻到上方</td></tr>
+      <tr><th>永不降半旗</th><td>沙烏地阿拉伯</td><td>旗上載有清真言，不得降半旗或印於商品</td></tr>
+      <tr><th>換旗最頻繁</th><td>阿富汗</td><td>二十世紀至今超過二十次</td></tr>
+      <tr><th>最難分辨的一對</th><td>羅馬尼亞 · 查德</td><td>僅藍色深淺不同，查德曾為此向聯合國抗議</td></tr>
+      <tr><th>最年輕設計者</th><td>巴布亞紐幾內亞</td><td>1971 年由十五歲的 Susan Karike 設計</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<!-- ══════════════ 全部國旗 ══════════════ -->
+<section id="all">
+  <h2>全部國旗一覽</h2>
+  <p class="intro">197 面：聯合國 193 個會員國、2 個觀察員（梵蒂岡、巴勒斯坦），加上中華民國與科索沃。點任何一面旗都會跳回上方的地圖與說明。</p>
+  <div id="allgrid" class="allgrid"></div>
+</section>
+
+<!-- ══════════════ 資料來源 ══════════════ -->
+<section id="src">
+  <h2>資料來源與授權</h2>
+  <ul class="links">
+    <li><a href="https://www.naturalearthdata.com/" target="_blank" rel="noopener">Natural Earth</a><p>地圖向量圖資（1:110m），公有領域。本站以 Robinson 投影重新繪製。</p></li>
+    <li><a href="https://github.com/hampusborgos/country-flags" target="_blank" rel="noopener">hampusborgos / country-flags</a><p>國旗 SVG 檔案，公有領域。</p></li>
+    <li><a href="https://nava.org/good-flag-bad-flag/" target="_blank" rel="noopener">NAVA · Good Flag, Bad Flag</a><p>國旗設計五原則的出處。</p></li>
+    <li><a href="https://www.ted.com/talks/roman_mars_why_city_flags_may_be_the_worst_designed_thing_you_ve_never_noticed" target="_blank" rel="noopener">Roman Mars · TED</a><p>讓旗幟設計原則廣為人知的那場演講。</p></li>
+  </ul>
+  <p class="note">國旗的歷史敘述常有多種說法，尤其是那些「傳說」——本站在這類地方都標明了是傳說。如果你發現錯誤，歡迎到 GitHub 開 issue。</p>
+</section>
+
+<footer>
+  <p id="counter" class="counter" hidden>本站累計瀏覽 <strong id="view-count">–</strong> 次</p>
+  <p><a href="https://github.com/rafaelhou/world-flags" target="_blank" rel="noopener">原始碼在 GitHub</a></p>
+</footer>
+
+</div><!-- /wrap -->
+</main>
+
+<script src="map-data.js"></script>
+<script src="data/europe.js"></script>
+<script src="data/asia.js"></script>
+<script src="data/africa.js"></script>
+<script src="data/americas.js"></script>
+<script src="data/oceania.js"></script>
+<script src="app.js"></script>
+<script src="counter.js"></script>
