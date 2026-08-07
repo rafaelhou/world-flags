@@ -120,7 +120,8 @@
     var rHitPx = 4.5 + 9 * grow;
 
     Array.prototype.forEach.call(gDot.childNodes, function (n) {
-      if (n.getAttribute('class') !== 'hit') { n.setAttribute('r', rDot); return; }
+      // 用 classList 而非字串比對：被選取或家族高亮時 class 會變成 "hit sel"／"hit fam"
+      if (!n.classList.contains('hit')) { n.setAttribute('r', rDot); return; }
       // 再受限於「最近的另一個圓點」——加勒比海那幾個島國靠得極近，
       // 點擊區放太大會互相搶走點擊。放大之後距離拉開，這個上限自然失效。
       var nd = NEAR[n.getAttribute('data-c')];
