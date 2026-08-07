@@ -96,6 +96,7 @@
   function addLabel(code, cx, cy, bw, bh, isDot) {
     var t = document.createElementNS(SVGNS, 'text');
     t.setAttribute('class', 'lbl');
+    t.setAttribute('data-c', code);      // 國名本身也要能點——見 pickAt
     t.setAttribute('x', cx);
     t.setAttribute('y', cy);
     t.textContent = SHORT[code] || INFO[code].zh;
@@ -357,23 +358,29 @@
     catch (_) { return false; }
   }
 
+  // 優先順序：踩在誰的國土上 > 小國圓點 > 點到誰的名字 > 只碰到誰的邊框
+  //
+  // 國名不能有絕對優先權——法國的名字會壓在比利時、荷蘭、德國、瑞士上頭，
+  // 那樣點這四國都會變成法國。但它是很好的退路：智利在全圖上只有幾像素寬，
+  // 「智利」兩個字卻有二十幾像素，字懸在太平洋上的那半邊本來點了沒反應。
   function pickAt(x, y) {
     var els = document.elementsFromPoint(x, y);
-    var dot = null, land = null, landAny = null;
+    var dot = null, fill = null, edge = null, text = null;
     for (var i = 0; i < els.length; i++) {
       var el = els[i];
       if (!el.getAttribute) continue;
       var c = el.getAttribute('data-c');
       if (!c || !INFO[c]) continue;
-      if (el.tagName === 'circle') {
-        if (!dot) dot = c;
-      } else {
-        if (!landAny) landAny = c;                    // 只碰到邊框也算，當退路
-        if (!land && inFill(el, x, y)) land = c;      // 填色真的包含此點者優先
+      if (el.tagName === 'text') { if (!text) text = c; }
+      else if (el.tagName === 'circle') { if (!dot) dot = c; }
+      else {
+        if (!edge) edge = c;                          // 只碰到邊框線
+        if (!fill && inFill(el, x, y)) fill = c;      // 填色真的包含此點
       }
     }
-    land = land || landAny;
-    return (MAP.w / view.w < 3) ? (land || dot) : (dot || land);
+    // 縮小時大國優先，放大後小國圓點優先
+    var first = (MAP.w / view.w < 3) ? (fill || dot) : (dot || fill);
+    return first || text || edge;
   }
 
   svg.addEventListener('click', function (e) {

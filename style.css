@@ -316,9 +316,8 @@ b { font-weight: 700; color: var(--accent-dk); }
 .dot.sel { fill: var(--accent); stroke-width: 2.5; }
 
 /* 國名標籤：白色描邊當底，深色地形上也讀得到 */
-.labels { pointer-events: none; }
-
 .lbl {
+  cursor: pointer;          /* 字本身可點——細長國家用字比用國土好點得多 */
   fill: #4a4335;
   stroke: rgba(255, 255, 255, .9);
   stroke-width: 3px;
@@ -330,6 +329,8 @@ b { font-weight: 700; color: var(--accent-dk); }
   letter-spacing: .02em;
   user-select: none;
 }
+
+.lbl.sel { fill: var(--accent-dk); }
 
 .tip {
   position: absolute;
