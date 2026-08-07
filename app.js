@@ -289,7 +289,9 @@
     if (ids.length === 1) {
       dragFrom = { sx: e.clientX, sy: e.clientY, vx: view.x, vy: view.y };
       svg.classList.add('dragging');
-      try { mapbox.setPointerCapture(e.pointerId); } catch (_) {}
+      // 這裡刻意「不」呼叫 setPointerCapture。指標捕捉會把後續事件重新指向
+      // 捕捉元素，連帶讓 click 的 target 變成外層的 .mapbox——掛在 <svg> 上的
+      // 監聽器就再也收不到，於是點哪一國都沒反應。改成真的開始拖曳後才捕捉。
     } else if (ids.length === 2) {
       dragFrom = null;
       pinchDist = dist(ptrs[ids[0]], ptrs[ids[1]]);
@@ -313,6 +315,12 @@
     }
 
     if (dragFrom) {
+      // 確定是拖曳（而不是手指按下時的微幅晃動）之後才捕捉指標，這樣單純的
+      // 點選完全不經過捕捉，click 的 target 也就不會被改掉。
+      if (!dragFrom.cap && Math.hypot(e.clientX - dragFrom.sx, e.clientY - dragFrom.sy) > tapSlop) {
+        dragFrom.cap = true;
+        try { mapbox.setPointerCapture(e.pointerId); } catch (_) {}
+      }
       var b = svg.getBoundingClientRect();
       var dx = (e.clientX - dragFrom.sx) / b.width * view.w;
       var dy = (e.clientY - dragFrom.sy) / b.height * view.h;
@@ -400,7 +408,10 @@
     return first || text || edge;
   }
 
-  svg.addEventListener('click', function (e) {
+  // 監聽器掛在外層的 .mapbox 而不是 <svg>：指標捕捉、或按下與放開落在不同元素上，
+  // 都可能讓 click 的 target 變成 svg 的祖先。掛在外層就一定收得到。
+  // 判定完全靠座標（pickAt），不看 event.target，所以掛在哪一層都不影響結果。
+  mapbox.addEventListener('click', function (e) {
     // 只比對「這一次按下的位置」與放開的位置。downAt 為空時放行（寧可多選也不要沒反應）。
     var d = downAt;
     downAt = null;
