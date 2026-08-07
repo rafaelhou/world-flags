@@ -272,18 +272,22 @@
   };
 
   // 指標拖曳 ＋ 雙指縮放
-  var ptrs = {}, dragFrom = null, moved = 0, pinchDist = 0, tapSlop = 5;
+  var ptrs = {}, dragFrom = null, pinchDist = 0, tapSlop = 10, downAt = null;
 
   mapbox.addEventListener('pointerdown', function (e) {
     // 按下再放開幾乎一定會晃個幾像素——觸控板按壓、手指離開螢幕都會。
     // 門檻設太嚴（原本滑鼠 5px）會讓點擊被默默吃掉，使用者只覺得「點了沒反應」。
     // 真正要平移地圖時位移遠大於此，放寬不會誤判。
     tapSlop = e.pointerType === 'touch' ? 16 : 10;
+
+    // 每次按下都重新記下起點。點擊與否只看「這一次按下到放開移動了多遠」，
+    // 不依賴任何跨手勢累積的狀態——那種狀態一旦卡住，之後每次點擊都會失效。
+    downAt = { x: e.clientX, y: e.clientY };
+
     ptrs[e.pointerId] = { x: e.clientX, y: e.clientY };
     var ids = Object.keys(ptrs);
     if (ids.length === 1) {
       dragFrom = { sx: e.clientX, sy: e.clientY, vx: view.x, vy: view.y };
-      moved = 0;
       svg.classList.add('dragging');
       try { mapbox.setPointerCapture(e.pointerId); } catch (_) {}
     } else if (ids.length === 2) {
@@ -312,7 +316,6 @@
       var b = svg.getBoundingClientRect();
       var dx = (e.clientX - dragFrom.sx) / b.width * view.w;
       var dy = (e.clientY - dragFrom.sy) / b.height * view.h;
-      moved = Math.max(moved, Math.hypot(e.clientX - dragFrom.sx, e.clientY - dragFrom.sy));
       view.x = dragFrom.vx - dx;
       view.y = dragFrom.vy - dy;
       clamp();
@@ -335,12 +338,24 @@
 
   function endPtr(e) {
     delete ptrs[e.pointerId];
-    if (Object.keys(ptrs).length < 2) pinchDist = 0;
-    if (!Object.keys(ptrs).length) { dragFrom = null; svg.classList.remove('dragging'); }
+    var n = Object.keys(ptrs).length;
+    if (n < 2) pinchDist = 0;
+    if (!n) { dragFrom = null; svg.classList.remove('dragging'); }
   }
   mapbox.addEventListener('pointerup', endPtr);
   mapbox.addEventListener('pointercancel', endPtr);
   mapbox.addEventListener('pointerleave', function () { tip.hidden = true; });
+
+  // 指標在地圖外放開時（拖到視窗邊緣、切到別的視窗、手指滑出畫面），
+  // .mapbox 收不到 pointerup，那個指標會永遠留在 ptrs 裡。下一次按下就會被
+  // 當成「第二根手指」進入雙指縮放模式——從此拖曳與點擊全部失效，直到重新整理。
+  // 這正是「每一國都點不動」的成因，所以在 window 層級再收一次尾。
+  window.addEventListener('pointerup', endPtr);
+  window.addEventListener('pointercancel', endPtr);
+  window.addEventListener('blur', function () {
+    ptrs = {}; dragFrom = null; pinchDist = 0; downAt = null;
+    svg.classList.remove('dragging');
+  });
 
   // 決定某個座標「應該」選到哪一國。
   //
@@ -386,7 +401,10 @@
   }
 
   svg.addEventListener('click', function (e) {
-    if (moved > tapSlop) return;                 // 拖曳而非點擊
+    // 只比對「這一次按下的位置」與放開的位置。downAt 為空時放行（寧可多選也不要沒反應）。
+    var d = downAt;
+    downAt = null;
+    if (d && Math.hypot(e.clientX - d.x, e.clientY - d.y) > tapSlop) return;   // 拖曳而非點擊
     var c = pickAt(e.clientX, e.clientY);
     if (c) select(c);
   });
